@@ -34,7 +34,7 @@
       <HintPath>..\..\A2v10\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
@@ -50,6 +50,11 @@
     <Compile Include="DynamicExtensions.cs" />
     <Compile Include="DynamicObject\DynamicType.cs" />
     <Compile Include="DynamicObject\ObjectBuilder.cs" />
+    <Compile Include="DynamicParser\DynamicParser.cs" />
+    <Compile Include="DynamicParser\DynamicRuntimeHelper.cs" />
+    <Compile Include="DynamicParser\ParseException.cs" />
+    <Compile Include="DynamicParser\SimpleTypes.cs" />
+    <Compile Include="DynamicParser\TypeHelpers.cs" />
     <Compile Include="ElementMetadata.cs" />
     <Compile Include="FieldInfo.cs" />
     <Compile Include="FieldMetadata.cs" />
@@ -67,6 +72,10 @@
     <ProjectReference Include="..\A2v10.Data.Interfaces\A2v10.Data.Interfaces.csproj">
       <Project>{1C5A0097-29A8-4157-80C0-B865CEAFCCCE}</Project>
       <Name>A2v10.Data.Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\A2v10.Data.Providers\A2v10.Data.Providers.csproj">
+      <Project>{1562EE09-1FD2-41F6-B575-5BE0343196A4}</Project>
+      <Name>A2v10.Data.Providers</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

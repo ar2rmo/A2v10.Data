@@ -50,7 +50,6 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
-    <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\Starter.cs" />
@@ -60,24 +59,45 @@
     <Compile Include="DatabaseDataTypes.cs" />
     <Compile Include="DatabaseAliases.cs" />
     <Compile Include="DatabaseModels.cs" />
+    <Compile Include="Expressions\DynamicExpression.cs" />
+    <Compile Include="Generator\ComplexModel.cs" />
+    <Compile Include="Generator\SimpleModel.cs" />
+    <Compile Include="Module\ModuleTest.cs" />
+    <Compile Include="Providers\CsvReader.cs" />
+    <Compile Include="Providers\ProviderTools.cs" />
     <Compile Include="TestMetadata.cs" />
     <Compile Include="DatabasePager.cs" />
     <Compile Include="DatabaseLoader.cs" />
     <Compile Include="DatabaseLoaderSync.cs" />
     <Compile Include="DatabaseWriter.cs" />
     <Compile Include="DatabaseLocalization.cs" />
+    <Compile Include="Providers\DbfReader.cs" />
     <Compile Include="Utils\DataTester.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\MetadataTester.cs" />
+    <Compile Include="Utils\TextDiff.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+    <None Include="TestFiles\ENCODING.DBF" />
+    <None Include="TestFiles\output.dbf" />
+    <None Include="TestFiles\simple.csv" />
+    <None Include="TestFiles\simple.dbf" />
+    <None Include="TestFiles\solution.json" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\A2v10.Data.Generator\A2v10.Data.Generator.csproj">
+      <Project>{78e6da53-9abb-406f-a711-55ff00386029}</Project>
+      <Name>A2v10.Data.Generator</Name>
+    </ProjectReference>
     <ProjectReference Include="..\A2v10.Data.Interfaces\A2v10.Data.Interfaces.csproj">
       <Project>{1C5A0097-29A8-4157-80C0-B865CEAFCCCE}</Project>
       <Name>A2v10.Data.Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\A2v10.Data.Providers\A2v10.Data.Providers.csproj">
+      <Project>{1562EE09-1FD2-41F6-B575-5BE0343196A4}</Project>
+      <Name>A2v10.Data.Providers</Name>
     </ProjectReference>
     <ProjectReference Include="..\A2v10.Data.ScriptBuilder\A2v10.Data.ScriptBuilder.csproj">
       <Project>{83c23f97-4f17-44fd-9933-fc8cac1b589c}</Project>
@@ -87,6 +107,11 @@
       <Project>{3cefba76-9ed3-40b4-a844-cc17d960202f}</Project>
       <Name>A2v10.Data</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="TestFiles\Test.accdb">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

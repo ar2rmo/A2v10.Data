@@ -28,6 +28,7 @@ namespace A2v10.Data
 		RefMapper _refMap = new RefMapper();
 		ExpandoObject _root = new ExpandoObject();
 		IDictionary<String, Object> _sys = new ExpandoObject() as IDictionary<String, Object>;
+		FieldInfo? mainElement;
 
 		public DataModelReader(IDataLocalizer localizer)
 		{
@@ -90,9 +91,28 @@ namespace A2v10.Data
 					return _dataModel;
 				if (_groupMetadata != null)
 					_sys.Add("Levels", GroupMetadata.GetLevels(_groupMetadata));
-				_dataModel = new DynamicDataModel(_metadata, _root, _sys as ExpandoObject);
+				_dataModel = new DynamicDataModel(_metadata, _root, _sys as ExpandoObject)
+				{
+					MainElement = GetMainElement()
+				};
 				return _dataModel;
 			}
+		}
+
+		DataElementInfo GetMainElement()
+		{
+			DataElementInfo dei = new DataElementInfo();
+			if (mainElement == null)
+				return dei;
+			if (!_metadata.TryGetValue(mainElement.Value.TypeName, out IDataMetadata meta))
+				return dei;
+			if (String.IsNullOrEmpty(meta.Id))
+				return dei;
+			dei.Metadata = meta;
+			var elem = _root.Get<ExpandoObject>(mainElement.Value.PropertyName);
+			dei.Element = elem;
+			dei.Id = elem.Get<Object>(meta.Id);
+			return dei;
 		}
 
 		String GetAlias(String name)
@@ -142,6 +162,9 @@ namespace A2v10.Data
 				var dataVal = rdr.GetValue(i);
 				switch (fi.SpecType)
 				{
+					case SpecType.Id:
+						_sys.Add("Id", dataVal);
+						break;
 					case SpecType.PageSize:
 						Int32 pageSize = (Int32)dataVal;
 						if (!String.IsNullOrEmpty(fi.TypeName))
@@ -158,6 +181,16 @@ namespace A2v10.Data
 						Int32 offset = (Int32)dataVal;
 						_createModelInfo(fi.TypeName).Set("Offset", offset);
 						break;
+					case SpecType.HasRows:
+						if (String.IsNullOrEmpty(fi.TypeName))
+							throw new DataLoaderException("For the HasRows modifier, the field name must be specified");
+						if (dataVal is Int32 intHasRows)
+							_createModelInfo(fi.TypeName).Set("HasRows", intHasRows != 0);
+						else if (dataVal is Boolean boolHasRows)
+							_createModelInfo(fi.TypeName).Set("HasRows", boolHasRows);
+						else
+							throw new DataLoaderException("Invalid data type for the TotalRows modifier. Expected 'int' or 'bit'");
+						break;
 					case SpecType.SortDir:
 						if (String.IsNullOrEmpty(fi.TypeName))
 							throw new DataLoaderException("For the SortDir modifier, the field name must be specified");
@@ -170,6 +203,12 @@ namespace A2v10.Data
 						String order = dataVal.ToString();
 						_createModelInfo(fi.TypeName).Set("SortOrder", order);
 						break;
+					case SpecType.GroupBy:
+						if (String.IsNullOrEmpty(fi.TypeName))
+							throw new DataLoaderException("For the Group modifier, the field name must be specified");
+						String group = dataVal.ToString();
+						_createModelInfo(fi.TypeName).Set("GroupBy", group);
+						break;
 					case SpecType.Filter:
 						if (String.IsNullOrEmpty(fi.TypeName))
 							throw new DataLoaderException("For the Filter modifier, the field name must be specified");
@@ -178,6 +217,8 @@ namespace A2v10.Data
 						if (xs.Length < 2)
 							throw new DataLoaderException("For the Filter modifier, the field name must be as ItemProperty.FilterProperty");
 						var fmi = _createModelInfo(xs[0]).GetOrCreate<ExpandoObject>("Filter");
+						if (filter is DateTime)
+							filter = DataHelpers.DateTime2StringWrap(filter);
 						for (Int32 ii = 1; ii<xs.Length; ii++)
 						{
 							if (ii == xs.Length - 1)
@@ -235,6 +276,7 @@ namespace A2v10.Data
 					dataVal = null;
 				var fn = GetAlias(rdr.GetName(i));
 				FieldInfo fi = new FieldInfo(fn);
+				dataVal = fi.ConvertToSpecType(dataVal);
 				if (fi.IsGroupMarker)
 				{
 					if (groupKeys == null)
@@ -351,6 +393,8 @@ namespace A2v10.Data
 			rootMetadata.AddField(objectDef, DataType.Undefined);
 			// other fields = object fields
 			var typeMetadata = GetOrCreateMetadata(objectDef.TypeName);
+			if (objectDef.IsMain && mainElement == null)
+				mainElement = objectDef;
 			if (objectDef.IsArray || objectDef.IsTree || objectDef.IsMap)
 				typeMetadata.IsArrayType = true;
 			if (objectDef.IsGroup)

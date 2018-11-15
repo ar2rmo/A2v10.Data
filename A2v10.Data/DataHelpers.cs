@@ -1,9 +1,11 @@
-﻿// Copyright © 2012-2017 Alex Kukhtin. All rights reserved.
+﻿// Copyright © 2012-2018 Alex Kukhtin. All rights reserved.
 
 
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+
+using Newtonsoft.Json;
 
 namespace A2v10.Data
 {
@@ -41,6 +43,7 @@ namespace A2v10.Data
 			{
 				case "Object":
 				case "LazyObject":
+				case "MainObject":
 					return FieldType.Object;
 				case "MapObject":
 					return FieldType.MapObject;
@@ -165,6 +168,14 @@ namespace A2v10.Data
 			else
 				throw new DataLoaderException($"Could not convert {dataVal.GetType()} to Boolean");
 			return rv;
+		}
+
+		public static Object DateTime2StringWrap(Object val)
+		{
+			if (!(val is DateTime)) return val;
+			return "\"\\/" +
+				JsonConvert.SerializeObject(val, new JsonSerializerSettings() { DateFormatHandling = DateFormatHandling.IsoDateFormat, DateTimeZoneHandling = DateTimeZoneHandling.Utc }) +
+				"\\/\"";
 		}
 	}
 }

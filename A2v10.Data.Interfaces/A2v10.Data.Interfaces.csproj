@@ -11,6 +11,7 @@
     <AssemblyName>A2v10.Data.Interfaces</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -31,7 +32,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -45,8 +45,12 @@
     <Compile Include="IDataMetadata.cs" />
     <Compile Include="IDataModel.cs" />
     <Compile Include="IDataProfiler.cs" />
+    <Compile Include="IExternalDataProvider.cs" />
     <Compile Include="IDataScripter.cs" />
+    <Compile Include="IExternalDataReader.cs" />
     <Compile Include="ILocalizer.cs" />
+    <Compile Include="IExternalDataFile.cs" />
+    <Compile Include="IExternalDataRecord.cs" />
     <Compile Include="ITableDescription.cs" />
     <Compile Include="ITenantManager.cs" />
     <Compile Include="IDbContext.cs" />
