@@ -61,7 +61,7 @@ namespace A2v10.Data
 					if (_tables.TryGetValue(prm.ParameterName, out Tuple<DataTable, String>  table))
 					{
 						// table parameters (binging by object name)
-						FillDataTable(table.Item1, GetDataForSave(data as ExpandoObject, table.Item2 /*path*/, null));
+						FillDataTable(table.Item1, GetDataForSave(data as ExpandoObject, table.Item2 /*path*/));
 						prm.Value = table.Item1;
 						prm.RemoveDbName(); // remove first segment (database name)
 					}
@@ -148,13 +148,15 @@ namespace A2v10.Data
 			return false;
 		}
 
-		IEnumerable<ExpandoObject> GetDataForSave(ExpandoObject data, String path, Int32? parentIndex = null, Object parentKey = null)
+		IEnumerable<ExpandoObject> GetDataForSave(ExpandoObject data, String path, Int32? parentIndex = null, Object parentKey = null, Guid? parentGuid = null)
 		{
 			if (String.IsNullOrEmpty(path))
 				yield return data;
 			var x = path.Split('.');
-			var currentData = data as IDictionary<String, Object>;
+			if (!(data is IDictionary<String, Object> currentData))
+				throw new DataWriterException("There is no current data");
 			var currentId = data.Get<Object>("Id");
+			Guid? currentGuid = null;
 			for (Int32 i = 0; i < x.Length; i++)
 			{
 				Boolean bLast = (i == (x.Length - 1));
@@ -175,10 +177,11 @@ namespace A2v10.Data
 							var currVal = list[j] as ExpandoObject;
 							currVal.Set("RowNumber", j + 1);
 							currVal.Set("ParentId", currentId);
-							if (parentKey != null)
-								currVal.Set("ParentKey", parentKey);
+							currVal.SetNotNull("ParentKey", parentKey);
+							var rowGuid = currVal.GetOrCreate<Guid>("GUID", () => Guid.NewGuid());
 							if (parentIndex != null)
 								currVal.Set("ParentRowNumber", parentIndex.Value + 1);
+							currVal.SetNotNull("ParentGUID", parentGuid);
 							if (bLast)
 								yield return currVal;
 							else
@@ -186,7 +189,7 @@ namespace A2v10.Data
 								String newPath = String.Empty;
 								for (Int32 k = i + 1; k < x.Length; k++)
 									newPath = newPath.AppendDot(x[k]);
-								foreach (var dx in GetDataForSave(currVal, newPath, j))
+								foreach (var dx in GetDataForSave(currVal, newPath, parentIndex:j, parentKey:null, parentGuid:rowGuid))
 									yield return dx;
 							}
 						}
@@ -206,16 +209,18 @@ namespace A2v10.Data
 									mapItem.Set("CurrentKey", kv.Key);
 									if (parentIndex != null)
 										mapItem.Set("ParentRowNumber", parentIndex.Value + 1);
+									mapItem.SetNotNull("ParentGUID", parentGuid);
 									yield return mapItem;
 								}
 							}
 							else
 							{
 								currVal.Set("ParentId", currentId);
-								if (parentKey != null)
-									currVal.Set("ParentKey", parentKey);
+								currVal.SetNotNull("ParentKey", parentKey);
 								if (parentIndex != null)
 									currVal.Set("ParentRowNumber", parentIndex.Value + 1);
+								currentGuid = currVal.GetOrCreate<Guid>("GUID", () => Guid.NewGuid());
+								currVal.SetNotNull("ParentGUID", parentGuid);
 								yield return currVal;
 							}
 						}
@@ -230,13 +235,14 @@ namespace A2v10.Data
 								foreach (var kv in currValD)
 								{
 									var mapItem = kv.Value as ExpandoObject;
-									foreach (var dx in GetDataForSave(mapItem, newPath, parentIndex, kv.Key))
+									foreach (var dx in GetDataForSave(mapItem, newPath, parentIndex:parentIndex, parentKey:kv.Key, parentGuid:currentGuid))
 										yield return dx;
 								}
 							}
 							else
 							{
-								foreach (var dx in GetDataForSave(currVal, newPath, 0))
+								currentGuid = currVal.GetOrCreate<Guid>("GUID", () => Guid.NewGuid());
+								foreach (var dx in GetDataForSave(currVal, newPath, parentIndex:0, parentKey:null, parentGuid:currentGuid))
 									yield return dx;
 							}
 						}
@@ -253,4 +259,3 @@ namespace A2v10.Data
 		}
 	}
 }
-;
