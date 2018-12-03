@@ -17,12 +17,25 @@ namespace A2v10.Data.Generator
 
 
 		const Int32 DEFAULT_VARCHAR_LENGTH = 255;
+		const Int32 DEFAULT_CHAR_LENGTH = 16;
 
 		private readonly IList<Field> _fields;
+		private readonly JsonTable _jsonTable;
+		private readonly Solution _solution;
 
 		public Field Key => Fields.FirstOrDefault(f => f.IsId);
 		public Field Parent => Fields.FirstOrDefault(f => f.Parent);
 		public Boolean HasReferences => Fields.FirstOrDefault(f => f.IsReference) != null;
+		public Field PrimaryKey => Fields.FirstOrDefault(f => f.PrimaryKey);
+
+		public Table(Solution solution, String name, JsonTable jsonTable)
+		{
+			_solution = solution;
+			_jsonTable = jsonTable;
+			TableName = name;
+			Schema = jsonTable.CurrentSchema;
+			_fields = new List<Field>();
+		}
 
 		public Table(String schema, String entity, String table)
 		{
@@ -30,6 +43,27 @@ namespace A2v10.Data.Generator
 			TableName = table;
 			Schema = schema;
 			_fields = new List<Field>();
+		}
+
+		public void CreateFields()
+		{
+			if (_jsonTable.Columns == null)
+				return;
+
+			foreach (var col in _jsonTable.Columns)
+			{
+				var column = col.Value;
+				Field f;
+				if (column.PrimaryKey)
+					f = AddKeyField(col.Key, column.Type, column.Size);
+				else if (column.IsParent)
+					f = AddParentField(col.Key, _solution.FindTable(column.Parent));
+				else if (column.IsReference)
+					f = AddReferenceField(col.Key, _solution.FindTable(column.Reference));
+				else
+					f = AddField(col.Key, column.Type, column.Size);
+				f.Default = column.Default;
+			}
 		}
 
 		public Field AddKeyField(String name, FieldType type = FieldType.Sequence, Int32 size = 0)
@@ -41,7 +75,8 @@ namespace A2v10.Data.Generator
 			var f = new Field(this, name, type, size)
 			{
 				Modifier = FieldModifier.Id,
-				Nullable = false
+				Nullable = false,
+				PrimaryKey = true
 			};
 			_fields.Add(f);
 			return f;
@@ -51,6 +86,8 @@ namespace A2v10.Data.Generator
 		{
 			if (type == FieldType.VarChar && size == 0)
 				size = DEFAULT_VARCHAR_LENGTH;
+			else if (type == FieldType.Char && size == 0)
+				size = DEFAULT_CHAR_LENGTH;
 			var f = new Field(this, name, type, size);
 			_fields.Add(f);
 			return f;
@@ -58,7 +95,7 @@ namespace A2v10.Data.Generator
 
 		public Field AddReferenceField(String name, Table refTable)
 		{
-			var f = new Field(this, name, FieldType.Reference)
+			var f = new Field(this, name, refTable.PrimaryKey.Type)
 			{
 				Reference = refTable
 			};
