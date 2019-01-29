@@ -13,7 +13,8 @@ namespace A2v10.Data.Providers
 
 		public FieldType FieldType { get; set; }
 
-		public Object Value { get
+		public Object Value {
+			get
 			{
 				switch (FieldType)
 				{
@@ -28,7 +29,28 @@ namespace A2v10.Data.Providers
 					case FieldType.Date:
 						return DateValue;
 				}
-				throw new ExternalDataException($"Invalid FieldType: {FieldType}");
+				throw new InvalidOperationException($"Invalid FieldType: {FieldType}");
+			}
+		}
+
+		public Boolean IsEmpty
+		{
+			get
+			{
+				switch (FieldType)
+				{
+					case FieldType.Char:
+					case FieldType.Memo:
+						return String.IsNullOrEmpty(StringValue);
+					case FieldType.Numeric:
+					case FieldType.Float:
+						return DecimalValue == 0M;
+					case FieldType.Boolean:
+						return BooleanValue == false;
+					case FieldType.Date:
+						return DateValue == DateTime.MinValue;
+				}
+				return true;
 			}
 		}
 	}
